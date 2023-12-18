@@ -27,5 +27,21 @@ class NotFound extends MoError {
     return 404;
   }
 }
+class Unauthorized extends MoError {
+  constructor(message) {
+    super(message);
+  }
+  getCode() {
+    return 401;
+  }
+}
+class Forbidden extends MoError {
+  constructor(message) {
+    super(message);
+  }
+  getCode() {
+    return 403;
+  }
+}
 
-module.exports = { MoError, BadRequest, NotFound };
+module.exports = { MoError, BadRequest, NotFound, Unauthorized, Forbidden };

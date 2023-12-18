@@ -1,4 +1,10 @@
-const { MoError, BadRequest, NotFound } = require("../utils/AppError");
+const {
+  MoError,
+  BadRequest,
+  NotFound,
+  Unauthorized,
+  Forbidden,
+} = require("../utils/AppError");
 
 const errorHandler = (error, req, res, next) => {
   if (error instanceof MoError) {
@@ -8,6 +14,12 @@ const errorHandler = (error, req, res, next) => {
     return res.status(error.getCode()).json({ message: error.message });
   }
   if (error instanceof NotFound) {
+    return res.status(error.getCode()).json({ message: error.message });
+  }
+  if (error instanceof Unauthorized) {
+    return res.status(error.getCode()).json({ message: error.message });
+  }
+  if (error instanceof Forbidden) {
     return res.status(error.getCode()).json({ message: error.message });
   }
   return (

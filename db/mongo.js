@@ -1,7 +1,7 @@
+require('dotenv').config()
 const { MongoClient, ServerApiVersion } = require("mongodb");
-const uri =
-  "mongodb+srv://jesus12:wxStROzE5DFak9cR@des.bxhvae4.mongodb.net/?retryWrites=true&w=majority";
-const dbName = "BLAH";
+const uri = process.env.MONGODB_URI;
+const dbName = process.env.DB_NAME;
 let dbInstance;
 
 async function connectDb() {
