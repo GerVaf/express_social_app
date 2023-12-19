@@ -81,13 +81,14 @@ exports.editUser = tryCatch(async (req, res) => {
 
 exports.deleteUser = tryCatch(async (req, res) => {
   const collection = await getDb().collection("user");
-
-  if (!ObjectId.isValid(req.params.id)) {
-    throw new NotFound(`Id ${req.params.id} is not exist !!`);
+  
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) {
+    throw new NotFound(`Id ${id} is not exist !!`);
   }
-  const id = new ObjectId(req.params.id);
+  const _id = new ObjectId(id);
   // console.log(id);
-  const result = await collection.deleteOne({ _id: id });
+  const result = await collection.deleteOne({ _id });
   console.log(result);
   if (result.acknowledged === true) {
     return res
