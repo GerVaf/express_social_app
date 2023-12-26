@@ -35,7 +35,7 @@ exports.getOwnerBlog = tryCatch(async (req, res) => {
   const { ownerId } = req.body;
   // console.log(ownerId)
   if (!ObjectId.isValid(ownerId)) {
-    return res.status(400).json({ message: "Owner ID is required" });
+    throw new BadRequest("Owner ID is required");
   }
   const blogOwner = new ObjectId(ownerId);
 
@@ -67,7 +67,10 @@ exports.getBlogOwner = tryCatch(async (req, res) => {
 
   const whichUser = new ObjectId(userId);
 
-  const result = await userCollection.findOne({ _id: whichUser });
+  const result = await userCollection.findOne(
+    { _id: whichUser },
+    { projection: { info: 0 } }
+  );
   res.status(200).json({ message: "Here's the owner of blog", data: result });
 });
 
