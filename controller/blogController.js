@@ -74,6 +74,9 @@ exports.getBlogOwner = tryCatch(async (req, res) => {
 exports.createBlog = tryCatch(async (req, res) => {
   const collection = await getBlogCollection();
   const blogData = { ...req.body };
+
+  blogData.blogImg = req.blogImg;
+
   blogData.blogOwner = new ObjectId(req.activeId);
   // console.log(blogData)
   const result = await collection.insertOne(blogData);

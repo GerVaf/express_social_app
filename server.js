@@ -16,7 +16,7 @@ connectDb()
     app.use("/api/v1/blog", blogRouter);
     app.use("/api/v1/user", userRouter);
     app.use("/api/v1", loginSignUpRouter);
-    app.use("/api/v1/img", testing);
+    // app.use("/api/v1/img", testing);
     app.use(notFound);
     app.use(errorHandler);
 

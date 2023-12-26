@@ -6,7 +6,7 @@ const { tryCatch } = require("../utils/tryCatch");
 const fs = require("fs");
 const unlink = require("fs").promises;
 
-exports.multerUpload = tryCatch(async (req, res, next) => {
+exports.multerUploadMiddleware = tryCatch(async (req, res, next) => {
   fileWithmulterUploader(req, res, function (err) {
     // console.log(err)
     if (err) {
@@ -21,7 +21,7 @@ exports.multerUpload = tryCatch(async (req, res, next) => {
   });
 });
 
-exports.cloudUpload = tryCatch(async (req, res, next) => {
+exports.cloudUploadMiddleware = tryCatch(async (req, res, next) => {
   if (!req.file) next(new BadRequest("File is required from multer !"));
   //   path is from multer
   const { path } = req.file;
