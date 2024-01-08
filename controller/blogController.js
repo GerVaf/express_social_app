@@ -109,14 +109,32 @@ exports.getBlogOwner = tryCatch(async (req, res) => {
 
 exports.createBlog = tryCatch(async (req, res) => {
   const collection = await getBlogCollection();
-  const blogData = { ...req.body };
+  const blogData = {
+    ...req.body,
+    blogImg: req.blogImg,
+    blogOwner: new ObjectId(req.activeId),
+  };
 
-  blogData.blogImg = req.blogImg;
+  // Convert hashTag to an array of strings
+  // if (req.blog && req.blog.hashTag) {
+  //   blogData.hashTag = req.blog.hashTag.split(",").map((tag) => tag.trim());
+  // }
 
-  blogData.blogOwner = new ObjectId(req.activeId);
-  // console.log(blogData)
+  // Simplified date formatting
+  const now = new Date();
+  const formattedDate = now
+    .toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .replace(/(\d+)\/(\d+)\/(\d+),/, "$3-$1-$2");
+  blogData.date = formattedDate;
+
   const result = await collection.insertOne(blogData);
-  // console.log(result);
   res.status(201).json({ message: "Blog Created Successfully", data: result });
 });
 

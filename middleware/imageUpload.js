@@ -35,6 +35,6 @@ exports.cloudUploadMiddleware = tryCatch(async (req, res, next) => {
     next(new BadRequest("There is error in Cloud!"));
   }
   req.blogImg = blogImg;
-  console.log(blogImg);
+  // console.log(blogImg);
   next();
 });

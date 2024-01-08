@@ -16,7 +16,7 @@ exports.authorize = tryCatch(async (req, res, next) => {
     //     console.log(decodedToken);af
 
     if (err) throw new Forbidden("Invalid Access token !!");
-    console.log(decodedToken.userId);
+    // console.log(decodedToken.userId);
     req.activeId = decodedToken.userId;
   });
 

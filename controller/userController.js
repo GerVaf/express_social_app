@@ -3,10 +3,10 @@ const { getDb } = require("../db/mongo");
 const { NotFound, BadRequest } = require("../utils/AppError");
 const { tryCatch } = require("../utils/tryCatch");
 const bcrypt = require("bcrypt");
+const getUserCollection = async () => await getDb().collection("user");
 
 exports.getUser = tryCatch(async (req, res) => {
-  const db = getDb();
-  const collection = await db.collection("user");
+  const collection = await getUserCollection();
 
   const result = await collection.find({}).toArray();
   // console.log(req)
@@ -15,12 +15,14 @@ exports.getUser = tryCatch(async (req, res) => {
 });
 
 exports.createUser = tryCatch(async (req, res) => {
-  const collection = await getDb().collection("user");
+  const collection = await getUserCollection();
 
   const {
     name,
     email,
     info: { password, con_password },
+    followers: [],
+    following: [],
   } = req.body;
 
   const users = await collection.find({}).toArray();
@@ -59,7 +61,7 @@ exports.createUser = tryCatch(async (req, res) => {
 });
 
 exports.editUser = tryCatch(async (req, res) => {
-  const collection = await getDb().collection("user");
+  const collection = await getUserCollection();
 
   const { _id, ...updateFields } = req.body;
   // console.log(req.body)
@@ -80,8 +82,8 @@ exports.editUser = tryCatch(async (req, res) => {
 });
 
 exports.deleteUser = tryCatch(async (req, res) => {
-  const collection = await getDb().collection("user");
-  
+  const collection = await getUserCollection();
+
   const { id } = req.params;
   if (!ObjectId.isValid(id)) {
     throw new NotFound(`Id ${id} is not exist !!`);
@@ -95,4 +97,57 @@ exports.deleteUser = tryCatch(async (req, res) => {
       .status(200)
       .json({ message: "Delete Successfully", data: result });
   }
+});
+
+exports.userFollow = tryCatch(async (req, res) => {
+  const collection = await getUserCollection();
+  const { userId } = req.body;
+  const followerId = req.activeId;
+
+  if (userId === followerId) {
+    throw new BadRequest("Cannot follow or unfollow yourself");
+  }
+  // console.log(userId)
+  // Find the user to be followed or unfollowed
+  const userToFollow = await collection.findOne({ _id: new ObjectId(userId) });
+  console.log(userToFollow);
+  // Check if the user to follow exists
+  if (!userToFollow) {
+    return res.status(404).json({ message: "User to follow not found" });
+  }
+
+  const isFollowing = userToFollow.followers?.includes(followerId);
+
+  let followUpdate, followingUpdate;
+  if (isFollowing) {
+    // If already following, then unfollow
+    followUpdate = { $pull: { followers: followerId } };
+    followingUpdate = { $pull: { following: userId } };
+  } else {
+    // If not following, then follow
+    followUpdate = { $addToSet: { followers: followerId } };
+    followingUpdate = { $addToSet: { following: userId } };
+  }
+
+  // Update the 'followers' array of the followed user
+  const followResult = await collection.updateOne(
+    { _id: new ObjectId(userId) },
+    followUpdate
+  );
+
+  // Update the 'following' array of the follower
+  const followingResult = await collection.updateOne(
+    { _id: new ObjectId(followerId) },
+    followingUpdate
+  );
+
+  res.status(200).json({ followResult, followingResult });
+});
+
+exports.userDetail = tryCatch(async (req, res) => {
+  const collection = await getUserCollection();
+  const { userId } = req.body;
+
+  const result = await collection.findOne({ _id: new ObjectId(userId) });
+  res.status(200).json({ message: "Here's detail", data: result });
 });

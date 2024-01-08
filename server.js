@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors"); // Include CORS
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 const { connectDb } = require("./db/mongo");
@@ -8,6 +9,11 @@ const blogRouter = require("./router/blogRouter");
 const testing = require("./router/testRouter");
 const app = express();
 const port = 8000;
+
+const corsOptions = {
+  origin: "http://localhost:5173",
+};
+app.use(cors(corsOptions));
 
 connectDb()
   .then(() => {
@@ -20,7 +26,8 @@ connectDb()
     app.use(notFound);
     app.use(errorHandler);
 
-    app.listen(port, () => {
+    // Listen on all network interfaces
+    app.listen(port, "0.0.0.0", () => {
       console.log(`Server is running on port ${port}`);
     });
   })

@@ -26,6 +26,6 @@ blogRouter
 blogRouter.route("/delete/:id").delete(deleteBlog);
 blogRouter.route("/like").post(authorize,likeBlog)
 blogRouter.route("/comment").get(getComment)
-blogRouter.route("/comment").post(commentBlog)
+blogRouter.route("/comment").post(authorize,commentBlog)
 
 module.exports = blogRouter;

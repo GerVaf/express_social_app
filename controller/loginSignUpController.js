@@ -20,7 +20,9 @@ exports.login = tryCatch(async (req, res) => {
 
   var token = jwt.sign({ userId: existLoginUser._id }, process.env.JWT_SECRET);
   // console.log("id", existLoginUser._id);
-  res.status(200).json({ message: "Login Successfully!!", token });
+  res
+    .status(200)
+    .json({ message: "Login Successfully!!", token, data: existLoginUser });
 });
 
 exports.register = tryCatch(async (req, res) => {
