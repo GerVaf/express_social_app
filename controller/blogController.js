@@ -41,7 +41,23 @@ exports.singleBlog = tryCatch(async (req, res) => {
     throw new BadRequest("This id does not exist");
   }
 
-  res.status(200).json({ message: "Here is the fking blog!", data: isExisted });
+  const result = await collection
+    .aggregate([
+      { $match: { _id: new ObjectId(_id) } },
+      {
+        $lookup: {
+          from: "comment",
+          localField: "_id",
+          foreignField: "blogId",
+          as: "comments",
+        },
+      },
+      { $project: { "comments.blogId": 0, "comments._id": 0 } },
+    ])
+    .toArray();
+
+  console.log(result);
+  res.status(200).json({ message: "Here is the fking blog!", data: result });
 });
 
 // exports.getOwnerBlog = tryCatch(async (req, res) => {
