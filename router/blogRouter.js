@@ -8,6 +8,7 @@ const {
   likeBlog,
   commentBlog,
   getComment,
+  singleBlog,
 } = require("../controller/blogController");
 const { authorize } = require("../middleware/authorize");
 const {
@@ -18,6 +19,7 @@ const {
 const blogRouter = Router();
 
 blogRouter.route("/").get(getBlog);
+blogRouter.route("/single-blog").post(singleBlog);
 blogRouter.route("/owner-blogs").post(getOwnerBlog);
 blogRouter.route("/blogs-owner").post(getBlogOwner);
 blogRouter

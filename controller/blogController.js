@@ -28,6 +28,22 @@ exports.getBlog = tryCatch(async (req, res) => {
   res.status(200).json({ data: result });
 });
 
+exports.singleBlog = tryCatch(async (req, res) => {
+  const collection = await getBlogCollection();
+
+  const { _id } = req.body;
+  if (!ObjectId.isValid(_id)) {
+    throw new BadRequest("Put the right id");
+  }
+  const isExisted = await collection.findOne({ _id: new ObjectId(_id) });
+
+  if (!isExisted) {
+    throw new BadRequest("This id does not exist");
+  }
+
+  res.status(200).json({ message: "Here is the fking blog!", data: isExisted });
+});
+
 // exports.getOwnerBlog = tryCatch(async (req, res) => {
 //   const blogCollection = await getBlogCollection();
 //   const { ownerId } = req.body;
