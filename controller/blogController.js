@@ -52,7 +52,7 @@ exports.singleBlog = tryCatch(async (req, res) => {
           as: "comments",
         },
       },
-      { $project: { "comments.blogId": 0, "comments._id": 0 } },
+      { $project: { "comments.blogId": 0 } },
     ])
     .toArray();
 
@@ -247,4 +247,75 @@ exports.commentBlog = tryCatch(async (req, res) => {
     message: `You comment on ${blogId} this post`,
     data: commentResult,
   });
+});
+
+exports.deleteComment = tryCatch(async (req, res) => {
+  const collection = await getCommentCollection();
+  const {
+    activeId,
+    body: { commentId },
+  } = req;
+
+  console.log(`Active ID: ${activeId}, Comment ID: ${commentId}`);
+
+  if (!ObjectId.isValid(commentId)) {
+    throw new BadRequest("Invalid comment ID!");
+  }
+
+  // First check if the comment exists and belongs to the active user
+  const existingComment = await collection.findOne({
+    _id: new ObjectId(commentId),
+    userId: new ObjectId(activeId),
+  });
+
+  if (!existingComment) {
+    throw new BadRequest("No matching comment found or you are not the owner!");
+  }
+
+  // If the comment exists, proceed with deletion
+  await collection.findOneAndDelete({
+    _id: new ObjectId(commentId),
+    userId: new ObjectId(activeId),
+  });
+
+  res.status(200).json({ message: "Comment deleted successfully!" });
+});
+
+exports.editComment = tryCatch(async (req, res) => {
+  const collection = await getCommentCollection();
+  const {
+    activeId,
+    body: { commentId, userComment },
+  } = req;
+
+  console.log(`Active ID: ${activeId}, Comment ID: ${commentId}`);
+
+  if (!ObjectId.isValid(commentId)) {
+    throw new BadRequest("Invalid comment ID!");
+  }
+
+  // First check if the comment exists and belongs to the active user
+  const existingOrOwerComment = await collection.findOne({
+    _id: new ObjectId(commentId),
+    userId: new ObjectId(activeId),
+  });
+
+  if (!existingOrOwerComment) {
+    throw new BadRequest("No matching comment found or you are not the owner!");
+  }
+
+  // If the comment exists, proceed with deletion
+  const update = await collection.findOneAndUpdate(
+    {
+      _id: new ObjectId(commentId),
+      userId: new ObjectId(activeId),
+    },
+    {
+      $set: { userComment },
+    }
+  );
+
+  console.log(update);
+
+  res.status(200).json({ message: "Comment edited successfully!" });
 });

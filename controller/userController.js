@@ -70,6 +70,7 @@ exports.editUser = tryCatch(async (req, res) => {
     throw new NotFound(`Id ${_id} is not exist !!`);
   }
   const id = new ObjectId(_id);
+  
   // console.log(updateFields);
   const result = await collection.updateOne(
     { _id: id },

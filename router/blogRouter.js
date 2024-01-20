@@ -9,6 +9,8 @@ const {
   commentBlog,
   getComment,
   singleBlog,
+  deleteComment,
+  editComment,
 } = require("../controller/blogController");
 const { authorize } = require("../middleware/authorize");
 const {
@@ -29,5 +31,8 @@ blogRouter.route("/delete/:id").delete(deleteBlog);
 blogRouter.route("/like").post(authorize,likeBlog)
 blogRouter.route("/comment").get(getComment)
 blogRouter.route("/comment").post(authorize,commentBlog)
+
+blogRouter.route("/comment/delete").delete(authorize,deleteComment)
+blogRouter.route("/comment/edit").put(authorize,editComment)
 
 module.exports = blogRouter;

@@ -1,4 +1,4 @@
-const { Unauthorized, Forbitten, Forbidden } = require("../utils/AppError");
+const { Unauthorized, Forbidden } = require("../utils/AppError");
 const { tryCatch } = require("../utils/tryCatch");
 const jwt = require("jsonwebtoken");
 
