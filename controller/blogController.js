@@ -2,6 +2,8 @@ const { ObjectId } = require("mongodb");
 const { getDb } = require("../db/mongo");
 const { NotFound, BadRequest } = require("../utils/AppError");
 const { tryCatch } = require("../utils/tryCatch");
+const { isBlogExist } = require("../service/blogService");
+const { isUserExist } = require("../service/userService");
 
 const getBlogCollection = async () => await getDb().collection("blog");
 const getUserCollection = async () => await getDb().collection("user");
@@ -59,24 +61,6 @@ exports.singleBlog = tryCatch(async (req, res) => {
   console.log(result);
   res.status(200).json({ message: "Here is the fking blog!", data: result });
 });
-
-// exports.getOwnerBlog = tryCatch(async (req, res) => {
-//   const blogCollection = await getBlogCollection();
-//   const { ownerId } = req.body;
-//   // console.log(ownerId)
-//   if (!ownerId) {
-//     return res.status(400).json({ message: "Owner ID is required" });
-//   }
-//   // search for blog owner
-//   const result = await blogCollection
-//     .aggregate([
-//       { $match: { blogOwner: ownerId } },
-//       { $project: { blogOwner: 0 } },
-//     ])
-//     .toArray();
-
-//   res.status(200).json({ message: "Here's owner's bolgs!!", data: result });
-// });
 
 exports.getOwnerBlog = tryCatch(async (req, res) => {
   const userCollection = await getUserCollection();
@@ -151,6 +135,9 @@ exports.createBlog = tryCatch(async (req, res) => {
   // if (req.blog && req.blog.hashTag) {
   //   blogData.hashTag = req.blog.hashTag.split(",").map((tag) => tag.trim());
   // }
+  if ((await isUserExist(blogData.blogOwner)) === null) {
+    throw new NotFound(`Your account does not exist !!`);
+  }
 
   // Simplified date formatting
   const now = new Date();
@@ -189,6 +176,13 @@ exports.likeBlog = tryCatch(async (req, res) => {
 
   const { blogId } = req.body;
   const userId = req.activeId;
+
+  if ((await isUserExist(new ObjectId(userId))) === null) {
+    throw new NotFound(`User does not exist !!`);
+  }
+  if ((await isBlogExist(new ObjectId(blogId))) === null) {
+    throw new NotFound(`Blog does not exist !!`);
+  }
 
   if (!ObjectId.isValid(blogId))
     throw new BadRequest("This user is not exist!!");
@@ -234,6 +228,13 @@ exports.commentBlog = tryCatch(async (req, res) => {
   const userId = new ObjectId(req.activeId);
 
   // console.log(blogId, userComment);
+  if ((await isUserExist(userId)) === null) {
+    throw new NotFound(`User does not exist !!`);
+  }
+
+  if ((await isBlogExist(new ObjectId(blogId))) === null) {
+    throw new BadRequest("This blog is not exist!");
+  }
 
   const commentResult = await commentCollection.insertOne({
     blogId: new ObjectId(blogId),
@@ -241,7 +242,7 @@ exports.commentBlog = tryCatch(async (req, res) => {
     userComment,
   });
 
-  console.log(commentResult);
+  // console.log(commentResult);
 
   res.status(201).json({
     message: `You comment on ${blogId} this post`,

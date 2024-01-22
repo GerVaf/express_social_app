@@ -1,9 +1,15 @@
 const { ObjectId } = require("mongodb");
-const { getDb } = require("../db/mongo");
 const { NotFound, BadRequest } = require("../utils/AppError");
 const { tryCatch } = require("../utils/tryCatch");
+
 const bcrypt = require("bcrypt");
-const getUserCollection = async () => await getDb().collection("user");
+const {
+  getUserCollection,
+  getBlogCollection,
+  getCommentCollection,
+} = require("../service/dbService");
+const { isUserExist } = require("../service/userService");
+const { startSession } = require("../db/mongo");
 
 exports.getUser = tryCatch(async (req, res) => {
   const collection = await getUserCollection();
@@ -70,7 +76,7 @@ exports.editUser = tryCatch(async (req, res) => {
     throw new NotFound(`Id ${_id} is not exist !!`);
   }
   const id = new ObjectId(_id);
-  
+
   // console.log(updateFields);
   const result = await collection.updateOne(
     { _id: id },
@@ -83,20 +89,44 @@ exports.editUser = tryCatch(async (req, res) => {
 });
 
 exports.deleteUser = tryCatch(async (req, res) => {
-  const collection = await getUserCollection();
+  const userCollection = await getUserCollection();
+  const blogCollection = await getBlogCollection();
+  const commentCollection = await getCommentCollection();
+  const session = await startSession();
 
   const { id } = req.params;
-  if (!ObjectId.isValid(id)) {
-    throw new NotFound(`Id ${id} is not exist !!`);
-  }
   const _id = new ObjectId(id);
-  // console.log(id);
-  const result = await collection.deleteOne({ _id });
+
+  if ((await isUserExist(_id)) === null) {
+    throw new NotFound(`Id ${id} does not exist !!`);
+  }
+
+  let result;
+
+  await session.withTransaction(async () => {
+    // Delete the user's blogs and comments
+    await blogCollection.deleteMany({ blogOwner: _id }, { session });
+    await commentCollection.deleteMany({ userId: _id }, { session });
+
+    // Remove the user's ID from the likes of all blogs
+    await blogCollection.updateMany({}, { $pull: { like: id } }, { session });
+    await userCollection.updateMany(
+      {},
+      { $pull: { followers: id } },
+      { session }
+    );
+    // Delete the user
+    result = await userCollection.deleteOne({ _id }, { session });
+  });
+
   console.log(result);
   if (result.acknowledged === true) {
     return res
       .status(200)
-      .json({ message: "Delete Successfully", data: result });
+      .json({ message: "Deleted Successfully", data: result });
+  } else {
+    // Handle the case where the transaction was not successful
+    throw new Error("Could not delete user and related data");
   }
 });
 
@@ -108,7 +138,10 @@ exports.userFollow = tryCatch(async (req, res) => {
   if (userId === followerId) {
     throw new BadRequest("Cannot follow or unfollow yourself");
   }
-  // console.log(userId)
+  if ((await isUserExist(new ObjectId(userId))) === null) {
+    throw new NotFound(`Your account was delted !!`);
+  }
+
   // Find the user to be followed or unfollowed
   const userToFollow = await collection.findOne({ _id: new ObjectId(userId) });
   console.log(userToFollow);
