@@ -12,18 +12,48 @@ const getCommentCollection = async () => await getDb().collection("comment");
 exports.getBlog = tryCatch(async (req, res) => {
   const blogCollection = await getBlogCollection();
 
-  // Use aggregation with $lookup to join comments
+  // Use aggregation with $lookup to join comments and owner information
   const result = await blogCollection
     .aggregate([
+      {
+        $lookup: {
+          from: "user",
+          localField: "blogOwner",
+          foreignField: "_id",
+          as: "ownerInfo",
+        },
+      },
+      {
+        $unwind: "$ownerInfo",
+      },
       {
         $lookup: {
           from: "comment",
           localField: "_id",
           foreignField: "blogId",
           as: "comments",
+          pipeline: [
+            {
+              $lookup: {
+                from: "user",
+                localField: "userId",
+                foreignField: "_id",
+                as: "profileInfo",
+              },
+            },
+            { $project: { userId: 0 } },
+          ],
         },
       },
-      { $project: { "comments.blogId": 0, "comments._id": 0 } },
+      {
+        $project: {
+          "comments.blogId": 0,
+          "comments.profileInfo.info": 0,
+          "blogOwner": 0,
+          "ownerInfo.info": 0,
+          // ownerEmail: "$ownerInfo.email",
+        },
+      },
     ])
     .toArray();
 
@@ -66,11 +96,15 @@ exports.getOwnerBlog = tryCatch(async (req, res) => {
   const userCollection = await getUserCollection();
   const { ownerId } = req.body;
 
-  if (!ObjectId.isValid(ownerId)) {
-    throw new BadRequest("Owner ID is required");
+  if(ObjectId.isValid(ownerId)){
+    throw new BadRequest("Id is not invalid!")
   }
-
   const blogOwner = new ObjectId(ownerId);
+
+
+  if ((await isUserExist(blogOwner)) === null) {
+    throw new NotFound(`This account does not exist !!`);
+  }
 
   // Search for blog owner and their blogs including comments
   const result = await userCollection
@@ -131,10 +165,6 @@ exports.createBlog = tryCatch(async (req, res) => {
     blogOwner: new ObjectId(req.activeId),
   };
 
-  // Convert hashTag to an array of strings
-  // if (req.blog && req.blog.hashTag) {
-  //   blogData.hashTag = req.blog.hashTag.split(",").map((tag) => tag.trim());
-  // }
   if ((await isUserExist(blogData.blogOwner)) === null) {
     throw new NotFound(`Your account does not exist !!`);
   }
