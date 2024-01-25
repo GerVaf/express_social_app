@@ -96,7 +96,7 @@ exports.getOwnerBlog = tryCatch(async (req, res) => {
   const userCollection = await getUserCollection();
   const { ownerId } = req.body;
 
-  if(ObjectId.isValid(ownerId)){
+  if(!ObjectId.isValid(ownerId)){
     throw new BadRequest("Id is not invalid!")
   }
   const blogOwner = new ObjectId(ownerId);
