@@ -10,9 +10,19 @@ const testing = require("./router/testRouter");
 const app = express();
 const port = 8000;
 
+const allowedOrigins = ['http://localhost:5173', 'https://social-blogs.vercel.app']; // Extend this list based on your requirements
+
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  maxAge: 86400, 
 };
+
 app.use(cors(corsOptions));
 
 connectDb()
