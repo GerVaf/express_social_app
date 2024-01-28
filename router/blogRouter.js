@@ -21,7 +21,7 @@ const {
 const blogRouter = Router();
 
 blogRouter.route("/").get(getBlog);
-blogRouter.route("/single-blog").post(singleBlog);
+blogRouter.route("/single-blog/:_id").get(singleBlog);
 blogRouter.route("/owner-blogs").post(getOwnerBlog);
 blogRouter.route("/blogs-owner").post(getBlogOwner);
 blogRouter

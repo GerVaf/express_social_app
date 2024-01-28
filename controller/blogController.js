@@ -63,7 +63,10 @@ exports.getBlog = tryCatch(async (req, res) => {
 exports.singleBlog = tryCatch(async (req, res) => {
   const collection = await getBlogCollection();
 
-  const { _id } = req.body;
+  const { _id } = req.params;
+  
+  console.log(_id)
+
   if (!ObjectId.isValid(_id)) {
     throw new BadRequest("Put the right id");
   }

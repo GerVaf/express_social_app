@@ -10,7 +10,7 @@ const testing = require("./router/testRouter");
 const app = express();
 const port = 8000;
 
-const allowedOrigins = ['http://localhost:5173', 'https://social-blogs.vercel.app']; // Extend this list based on your requirements
+const allowedOrigins = ['http://localhost:5173', 'https://social-blogs.vercel.app']; 
 
 const corsOptions = {
   origin: function (origin, callback) {
