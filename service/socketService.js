@@ -1,4 +1,5 @@
 const { Server } = require("socket.io");
+const { saveMessageToDatabase } = require("./dbService");
 
 let io = null;
 
@@ -13,16 +14,18 @@ module.exports = {
 
     let joinUser = [];
 
-    const addUserInfo = (userInfo, socketId) => {
+    const addActiveUserInfo = (userInfo, socketId) => {
       // Prevent duplicate entries
       const existingUserIndex = joinUser.findIndex(
-        (user) => user.userInfo._id === userInfo._id
+        (user) => user.userInfo?._id === userInfo?._id
       );
       if (existingUserIndex !== -1) {
         joinUser[existingUserIndex].socketId = socketId;
       } else {
         joinUser.push({ userInfo, socketId });
       }
+
+      io.emit("showActiveUser", joinUser);
     };
 
     const removeActiveUser = (socketId) => {
@@ -34,48 +37,60 @@ module.exports = {
         console.log(`Removing user: ${joinUser[userIndex].userInfo.email}`);
         joinUser.splice(userIndex, 1);
       }
+
+      // realtime unactive for frontend
+      io.emit("showActiveUser", joinUser);
     };
 
-    const sendMessage = (senderSocketId, receiverId, messageContent) => {
-      const sender = joinUser.find((user) => user.socketId === senderSocketId);
+    const sendMessage = async (senderId, receiverId, messageContent) => {
+      const sender = joinUser.find((user) => user?.userInfo?._id === senderId);
       const receiver = joinUser.find(
-        (user) => user.userInfo._id === receiverId
+        (user) => user?.userInfo?._id === receiverId
       );
 
-      if (sender && receiver) {
-        const message = {
-          senderId: sender.userInfo._id,
-          receiverId: receiver.userInfo._id,
-          content: messageContent,
-          timestamp: new Date(),
-        };
+      const message = {
+        senderId: senderId,
+        receiverId: receiverId,
+        content: messageContent,
+        timestamp: new Date(),
+        isRead: false, 
+      };
 
-        // Emit the message to the receiver's socket
-        io.to(receiver.socketId).emit("receiveMessage", message);
+      try {
+        await saveMessageToDatabase(message); 
 
-        // Also send a confirmation back to the sender with the message
-        io.to(senderSocketId).emit("messageSent", message);
-      } else {
-        console.log("Receiver not found or offline");
-        io.to(senderSocketId).emit(
-          "messageFailed",
-          "Receiver not found or offline"
-        );
+        // If receiver is online, emit the message to the receiver's socket
+        if (receiver) {
+          io.to(receiver?.socketId).emit("receiveMessage", message);
+        }
+
+        // Send a confirmation back to the sender
+        io.to(sender?.socketId).emit("messageSent", message);
+      } catch (error) {
+        console.error("Error saving message: ", error);
+        io.to(sender?.socketId).emit("messageFailed", "Failed to send message");
       }
     };
 
     io.on("connection", (socket) => {
       console.log(`New connection: ${socket.id}`);
 
-      socket.on("senderData", (data) => {
-        console.log("Received senderData:", data);
-        addUserInfo(data, socket.id);
-        socket.emit("activeUser", joinUser);
-        console.log("joinUser after senderData:", joinUser);
+      socket.on("activeUser", (data) => {
+        // console.log(data);
+        addActiveUserInfo(data, socket.id);
+        // console.log(joinUser);
       });
 
-      socket.on("newMessage", ({ receiverId, message }) => {
-        sendMessage(socket.id, receiverId, message);
+      // socket.on("senderData", (data) => {
+      //   console.log("Received senderData:", data);
+      //   addUserInfo(data, socket.id);
+      //   socket.emit("activeUser", joinUser);
+      //   console.log("joinUser after senderData:", joinUser);
+      // });
+
+      socket.on("Message", ({ senderId, receiverId, message }) => {
+        sendMessage(senderId, receiverId, message);
+        console.log(senderId, receiverId, message);
       });
 
       socket.on("disconnect", () => {

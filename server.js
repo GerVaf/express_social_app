@@ -43,7 +43,7 @@ connectDb().then(() => {
   app.use("/api/v1/blog", blogRouter);
   app.use("/api/v1/user", userRouter);
   app.use("/api/v1", loginSignUpRouter);
-  app.use("/api/v1", messageRouter);
+  app.use("/api/v1/message", messageRouter);
 
   // Error handling middlewares
   app.use(notFound);

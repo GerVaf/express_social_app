@@ -1,14 +1,18 @@
-const socketService = require("../service/socketService");
+const { getMessageCollection } = require("../service/dbService");
 const { tryCatch } = require("../utils/tryCatch");
 
-exports.sendMessage = tryCatch(async(req,res)=>{
-     try {
+exports.sendMessage = tryCatch(async (req, res) => {
+  const collection = await getMessageCollection();
+  const { senderId, receiverId } = req.body;
 
-          const io = socketService.getIO()
-          io.emit('someEvent', { message: 'Hello from someController!' });
-          io.on('sendMessage',(data)=>console.log(data))
-          
-     } catch (error) {
-          console.log(error)
-     }
-})
+  const query = {
+    $or: [
+      { senderId: senderId, receiverId: receiverId },
+      { senderId: receiverId, receiverId: senderId }
+    ]
+  };
+
+  const result = await collection.find(query).toArray();
+  
+  res.status(200).json({ messages: result });
+});
