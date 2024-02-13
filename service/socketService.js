@@ -2,12 +2,16 @@ const { Server } = require("socket.io");
 const { saveMessageToDatabase } = require("./dbService");
 
 let io = null;
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://social-blogs.vercel.app",
+];
 
 module.exports = {
   init: (httpServer) => {
     io = new Server(httpServer, {
       cors: {
-        origin: "http://localhost:5173",
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
       },
     });

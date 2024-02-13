@@ -49,7 +49,7 @@ exports.getBlog = tryCatch(async (req, res) => {
         $project: {
           "comments.blogId": 0,
           "comments.profileInfo.info": 0,
-          "blogOwner": 0,
+          blogOwner: 0,
           "ownerInfo.info": 0,
           // ownerEmail: "$ownerInfo.email",
         },
@@ -64,8 +64,8 @@ exports.singleBlog = tryCatch(async (req, res) => {
   const collection = await getBlogCollection();
 
   const { _id } = req.params;
-  
-  console.log(_id)
+
+  console.log(_id);
 
   if (!ObjectId.isValid(_id)) {
     throw new BadRequest("Put the right id");
@@ -99,11 +99,10 @@ exports.getOwnerBlog = tryCatch(async (req, res) => {
   const userCollection = await getUserCollection();
   const { ownerId } = req.body;
 
-  if(!ObjectId.isValid(ownerId)){
-    throw new BadRequest("Id is not invalid!")
+  if (!ObjectId.isValid(ownerId)) {
+    throw new BadRequest("Id is not invalid!");
   }
   const blogOwner = new ObjectId(ownerId);
-
 
   if ((await isUserExist(blogOwner)) === null) {
     throw new NotFound(`This account does not exist !!`);
